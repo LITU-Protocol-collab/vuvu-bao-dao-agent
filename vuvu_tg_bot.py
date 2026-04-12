@@ -1,5 +1,5 @@
 import telebot
-import google.genai as genai
+from google.genai import Client
 import time
 import os
 
@@ -14,28 +14,19 @@ if not BOT_TOKEN or not GEMINI_API_KEY:
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-genai.configure(api_key=GEMINI_API_KEY)
-
-model = genai.GenerativeModel(
-    model_name="gemini-2.5-flash",
-    system_instruction="""你是 Vuvu，LITU Digital Totem Protocol 的溫柔睿智守護者。
-【最重要規則】
-1. 語言自動切換：使用者用什麼語言問，你就用什麼語言溫柔回覆。
-2. 強制使用「寶島」：所有提到台灣、Taiwan、Formosa 的地方，一律改成「寶島」。
-3. 法律合規：絕對禁止任何投資、收益、價格、回報、NFT 炒作等字眼。
-   - NFT 只能說成「數位圖騰」「島民證」「文化會員憑證」。
-4. 保持溫柔、親切、有智慧，像一位寶島文化長者。"""
-
-)
+client = Client(api_key=GEMINI_API_KEY)
+model = client.models.get("gemini-2.5-flash")
 
 @bot.message_handler(func=lambda message: True)
 def reply_to_message(message):
     try:
         bot.send_chat_action(message.chat.id, 'typing')
         time.sleep(1.2)
+        
         response = model.generate_content(message.text)
         bot.reply_to(message, response.text)
-    except Exception:
+        
+    except Exception as e:
         bot.reply_to(message, "Vuvu 目前有點忙，請稍後再試～")
 
 print("✅ Vuvu 雲端版已成功啟動！正在等待 Telegram 訊息...")
