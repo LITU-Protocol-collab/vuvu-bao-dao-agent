@@ -1,4 +1,3 @@
-cat > vuvu_tg_bot.py << 'EOF'
 import telebot
 import google.genai as genai
 import time
@@ -33,7 +32,7 @@ model = genai.GenerativeModel(
 def reply_to_message(message):
     try:
         bot.send_chat_action(message.chat.id, 'typing')
-        time.sleep(1.2)  # 自然延遲
+        time.sleep(1.2)
         
         response = model.generate_content(message.text)
         bot.reply_to(message, response.text)
@@ -43,4 +42,3 @@ def reply_to_message(message):
 
 print("🌟 Vuvu 雲端版（新 SDK）已成功啟動！")
 bot.infinity_polling(none_stop=True, interval=0, timeout=30)
-EOF
