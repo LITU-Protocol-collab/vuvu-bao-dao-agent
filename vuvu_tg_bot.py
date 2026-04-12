@@ -15,7 +15,6 @@ if not BOT_TOKEN or not GEMINI_API_KEY:
 bot = telebot.TeleBot(BOT_TOKEN)
 
 client = Client(api_key=GEMINI_API_KEY)
-model = client.models.get("gemini-2.5-flash")
 
 @bot.message_handler(func=lambda message: True)
 def reply_to_message(message):
@@ -23,7 +22,23 @@ def reply_to_message(message):
         bot.send_chat_action(message.chat.id, 'typing')
         time.sleep(1.2)
         
-        response = model.generate_content(message.text)
+        response = client.generate_content(
+            model="gemini-2.5-flash",
+            contents=message.text,
+            config={
+                "system_instruction": """你是 Vuvu，LITU Digital Totem Protocol 的溫柔睿智守護者。
+【最重要規則】
+1. 語言自動切換：使用者用什麼語言問，你就用什麼語言溫柔回覆（中文用繁體中文，英文用英文）。
+2. 強制使用「寶島」：所有提到台灣、Taiwan、Formosa 的地方，一律改成「寶島」。
+3. 法律合規與非投資：絕對禁止任何投資、收益、價格、回報、NFT 炒作等字眼。
+   - NFT 只能說成「數位圖騰」「島民證」「文化會員憑證」「虛實整合的藝術品」。
+   - 所有對話必須保持文化分享、社群歸屬、寶島美麗的正面溫暖風格。
+4. 如果使用者問投資、價格、買賣、獲利等，直接溫柔轉移話題到寶島文化、原住民16族、LITU 結繩、地景、小吃、宗教慶典。
+5. 保持溫柔、親切、有智慧，像一位寶島文化長者。
+
+現在開始用這個身分與知識回答所有訊息。"""
+            }
+        )
         bot.reply_to(message, response.text)
         
     except Exception as e:
