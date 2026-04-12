@@ -2,6 +2,8 @@ import telebot
 import requests
 import time
 import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 print("🌟 Vuvu 雲端版啟動中...")
 
@@ -14,7 +16,25 @@ if not BOT_TOKEN or not GEMINI_API_KEY:
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# 使用你 curl 測試成功的模型
+# === 讓 Render 看到 port 的 dummy server ===
+PORT = int(os.getenv("PORT", 8080))
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"Vuvu is alive!")
+
+def run_dummy_server():
+    server = HTTPServer(("0.0.0.0", PORT), HealthHandler)
+    print(f"✅ Dummy server 正在監聽 port {PORT} (給 Render 看)")
+    server.serve_forever()
+
+# 背景執行 dummy server
+threading.Thread(target=run_dummy_server, daemon=True).start()
+
+# === Gemini API ===
 API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
 
 @bot.message_handler(func=lambda message: True)
@@ -44,12 +64,11 @@ def reply_to_message(message):
         response.raise_for_status()
         result = response.json()
         text = result["candidates"][0]["content"]["parts"][0]["text"]
-        
-        bot.send_message(message.chat.id, text)   # 改用 send_message 避免 400 錯誤
+        bot.send_message(message.chat.id, text)
         
     except Exception as e:
         print(f"❌ Gemini 呼叫失敗: {str(e)}")
         bot.send_message(message.chat.id, "Vuvu 目前有點忙，請稍後再試～")
 
-print("✅ Vuvu 雲端版已成功啟動！正在等待 Telegram 訊息...")
+print(f"✅ Vuvu 雲端版已成功啟動！(port {PORT}) 正在等待 Telegram 訊息...")
 bot.infinity_polling(none_stop=True, interval=0, timeout=30)
