@@ -1,6 +1,5 @@
 import telebot
 import requests
-import json
 import time
 import os
 
@@ -15,7 +14,8 @@ if not BOT_TOKEN or not GEMINI_API_KEY:
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+# 使用你 curl 測試成功的模型
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
 
 @bot.message_handler(func=lambda message: True)
 def reply_to_message(message):
@@ -25,7 +25,7 @@ def reply_to_message(message):
         
         payload = {
             "contents": [{"parts": [{"text": message.text}]}],
-            "systemInstruction": {
+            "system_instruction": {
                 "parts": [{
                     "text": """你是 Vuvu，LITU Digital Totem Protocol 的溫柔睿智守護者。
 【最重要規則】
@@ -40,20 +40,16 @@ def reply_to_message(message):
             }
         }
 
-        headers = {"Content-Type": "application/json"}
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=15)
-        
-        print(f"🔍 Gemini API 狀態碼: {response.status_code}")  # 這行會顯示在 Logs 裡
-        
+        response = requests.post(API_URL, json=payload, timeout=15)
         response.raise_for_status()
         result = response.json()
         text = result["candidates"][0]["content"]["parts"][0]["text"]
         
-        bot.reply_to(message, text)
+        bot.send_message(message.chat.id, text)   # 改用 send_message 避免 400 錯誤
         
     except Exception as e:
-        print(f"❌ Gemini 呼叫失敗: {str(e)}")  # 這行會顯示具體錯誤在 Logs
-        bot.reply_to(message, "Vuvu 目前有點忙，請稍後再試～")
+        print(f"❌ Gemini 呼叫失敗: {str(e)}")
+        bot.send_message(message.chat.id, "Vuvu 目前有點忙，請稍後再試～")
 
 print("✅ Vuvu 雲端版已成功啟動！正在等待 Telegram 訊息...")
 bot.infinity_polling(none_stop=True, interval=0, timeout=30)
