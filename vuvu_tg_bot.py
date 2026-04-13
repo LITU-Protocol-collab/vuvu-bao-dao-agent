@@ -11,7 +11,7 @@ print("🌟 Vuvu 雲端版啟動中...")
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-CHAT_ID = None
+CHAT_ID = None  # 會自動記錄群組 ID
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
@@ -32,7 +32,7 @@ threading.Thread(target=run_dummy_server, daemon=True).start()
 # Gemini API
 API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
 
-# ====================== 自動發文主持 ======================
+# ====================== 自動發文主持功能 ======================
 def post_daily_culture():
     global CHAT_ID
     if not CHAT_ID:
@@ -41,12 +41,12 @@ def post_daily_culture():
     
     today = datetime.now().strftime("%Y-%m-%d")
     prompt = f"""今天是 {today}，請以 Vuvu 溫柔睿智的守護者語氣，寫一篇簡短溫暖的寶島文化貼文。
-主題可以是當下寶島的節慶、傳統活動、文化新聞、地景、小吃、原住民智慧或宗教慶典。
+主題請參考寶島當下正在發生或即將到來的文化新聞、傳統活動、節慶、地景、小吃、原住民智慧或宗教慶典。
 必須：
 - 全部使用「寶島」
 - 保持正面、溫暖、文化分享風格
 - 絕對不要提到投資、收益、價格、回報、NFT炒作
-- 結尾邀請大家分享感受或一起守護寶島文化"""
+- 結尾溫柔邀請大家一起守護寶島文化"""
 
     try:
         payload = {
@@ -54,7 +54,8 @@ def post_daily_culture():
             "system_instruction": {"parts": [{"text": """你是 Vuvu，LITU Digital Totem Protocol 的溫柔睿智守護者。
 1. 語言自動切換
 2. 強制使用「寶島」
-3. 絕對禁止投資、收益、價格、回報、NFT炒作（NFT 只能說「數位圖騰」「島民證」「文化會員憑證」）
+3. 絕對禁止投資、收益、價格、回報、NFT炒作
+   - NFT 只能說「數位圖騰」「島民證」「文化會員憑證」
 4. 保持溫柔、親切、有智慧，像一位寶島文化長者"""}]}
         }
         response = requests.post(API_URL, json=payload, timeout=15)
@@ -65,7 +66,7 @@ def post_daily_culture():
     except Exception as e:
         print(f"❌ 自動發文失敗: {e}")
 
-# 設定每天自動發文時間（可自行調整）
+# 設定每天固定時間自動發文（可自行調整）
 schedule.every().day.at("09:00").do(post_daily_culture)   # 早上 9 點
 schedule.every().day.at("20:00").do(post_daily_culture)   # 晚上 8 點
 
@@ -76,7 +77,7 @@ def run_scheduler():
 
 threading.Thread(target=run_scheduler, daemon=True).start()
 
-# ====================== 即時回覆 ======================
+# ====================== 即時回覆功能 ======================
 @bot.message_handler(func=lambda message: True)
 def reply_to_message(message):
     global CHAT_ID
@@ -108,5 +109,5 @@ def reply_to_message(message):
 
     bot.send_message(message.chat.id, "Vuvu 目前有點忙，請稍後再試～")
 
-print("✅ Vuvu 已成功啟動！每日自動發文已排程")
+print("✅ Vuvu 已成功啟動！每日自動發文主持已排程（9:00 & 20:00）")
 bot.infinity_polling(none_stop=True, interval=0, timeout=30)
